@@ -1,8 +1,7 @@
 'use client';
 
-import React from "react"
-
-import { useState } from 'react';
+import React, { useState } from "react";
+import emailjs from '@emailjs/browser';
 
 interface Wish {
   id: number;
@@ -15,125 +14,121 @@ const INITIAL_WISHES: Wish[] = [
   {
     id: 1,
     name: 'Venu',
-    message: 'Happy Birthday to my amazing brother! Wishing you all the joy and happiness in the world. You deserve the very best!',
+    message: 'Happy Birthday to my amazing brother! Wishing you all the joy and happiness in the world.',
     emoji: '🎂'
-  },
-  {
-    id: 2,
-    name: 'Family',
-    message: 'On this special day, we celebrate you and all the wonderful moments we\'ve shared. Here\'s to many more happy years ahead!',
-    emoji: '❤️'
-  },
-  {
-    id: 3,
-    name: 'Friends',
-    message: 'May this birthday bring you endless smiles, laughter, and beautiful memories. You\'re truly special to everyone around you!',
-    emoji: '✨'
-  },
+  }
 ];
 
 export function Wishes() {
   const [wishes, setWishes] = useState<Wish[]>(INITIAL_WISHES);
   const [formData, setFormData] = useState({ name: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.name.trim() && formData.message.trim()) {
+
+    if (!formData.name.trim() || !formData.message.trim()) return;
+
+    setLoading(true);
+
+    try {
+      // 🔥 Send Email
+      await emailjs.send(
+        "service_03z10rm",          // Your Service ID
+        "template_12fwvah",         // Your Template ID
+        {
+          from_name: formData.name,
+          message: formData.message,
+        },
+        "1bA-u34Rl7UeQWW8N"          // Your Public Key
+      );
+
+      // Add wish to UI
       const newWish: Wish = {
         id: wishes.length + 1,
         name: formData.name,
         message: formData.message,
         emoji: '🎉'
       };
+
       setWishes([...wishes, newWish]);
       setFormData({ name: '', message: '' });
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 3000);
+
+    } catch (error) {
+      alert("Failed to send email");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <section className="py-20 px-4 sm:px-6 bg-gradient-to-b from-background to-accent/5">
+    <section className="py-20 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
-            💌 Birthday Wishes
-          </h2>
-          <p className="text-xl text-foreground/70">
-            Heartfelt messages and well-wishes from loved ones
-          </p>
-        </div>
 
-        {/* Wishes Display */}
+        <h2 className="text-4xl font-bold text-center mb-10">
+          💌 Birthday Wishes
+        </h2>
+
+        {/* Display Wishes */}
         <div className="grid gap-6 mb-12">
           {wishes.map((wish) => (
-            <div
-              key={wish.id}
-              className="bg-card border-l-4 border-primary rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-300"
-            >
-              <div className="flex items-start gap-4">
+            <div key={wish.id} className="p-6 border-l-4 border-primary rounded-lg shadow">
+              <div className="flex gap-4">
                 <span className="text-4xl">{wish.emoji}</span>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg text-foreground mb-2">
-                    {wish.name}
-                  </h3>
-                  <p className="text-foreground/80 leading-relaxed">
-                    {wish.message}
-                  </p>
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">{wish.name}</h3>
+                  <p>{wish.message}</p>
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Add Wish Form */}
-        <div className="bg-card rounded-2xl p-8 border border-border shadow-lg">
-          <h3 className="text-2xl font-bold text-foreground mb-6 text-center">
+        {/* Form */}
+        <div className="p-8 border rounded-2xl shadow-lg">
+          <h3 className="text-2xl font-bold mb-6 text-center">
             ✍️ Add Your Wish
           </h3>
 
           {submitted && (
-            <div className="mb-6 p-4 bg-primary/10 border border-primary rounded-lg text-primary text-center font-semibold animate-fade-in">
-              ✨ Thank you! Your wish has been added!
+            <div className="mb-6 p-4 bg-green-100 text-green-700 text-center rounded-lg">
+              ✨ Wish sent successfully!
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
-                Your Name
-              </label>
-              <input
-                id="name"
-                type="text"
-                placeholder="Enter your name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-foreground/50"
-              />
-            </div>
 
-            <div>
-              <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
-                Your Message
-              </label>
-              <textarea
-                id="message"
-                placeholder="Write your birthday wishes here..."
-                rows={4}
-                value={formData.message}
-                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                className="w-full px-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-foreground/50 resize-none"
-              />
-            </div>
+            <input
+              type="text"
+              placeholder="Your Name"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              className="w-full px-4 py-2 border rounded-lg"
+            />
+
+            <textarea
+              placeholder="Your Message"
+              rows={4}
+              value={formData.message}
+              onChange={(e) =>
+                setFormData({ ...formData, message: e.target.value })
+              }
+              className="w-full px-4 py-2 border rounded-lg resize-none"
+            />
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold py-3 rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+              disabled={loading}
+              className="w-full bg-primary text-white py-3 rounded-lg hover:scale-105 transition"
             >
-              Send Birthday Wish 🎉
+              {loading ? "Sending..." : "Send Birthday Wish 🎉"}
             </button>
+
           </form>
         </div>
       </div>
